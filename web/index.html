@@ -101,7 +101,20 @@
       <!-- Step 3: API Key -->
       <div id="setupStep3" class="hidden">
         <h2 class="text-2xl font-semibold text-white mb-2">Enter your API key</h2>
-        <p class="text-neutral-400 mb-6" id="apiKeyDescription">Your key is stored locally and never sent to our servers.</p>
+        <p class="text-neutral-400 mb-4" id="apiKeyDescription">Your key is stored locally and never sent to our servers.</p>
+        
+        <!-- Instructions Box -->
+        <div id="apiInstructions" class="bg-[#1a1a1a] border border-neutral-700 rounded-xl p-4 mb-6">
+          <p class="text-sm font-medium text-white mb-3">📋 How to get your API key:</p>
+          <ol id="apiSteps" class="text-sm text-neutral-400 space-y-2">
+            <li class="flex gap-2"><span class="text-neutral-500">1.</span> Go to <a href="https://platform.openai.com/signup" target="_blank" class="text-blue-400 hover:underline">platform.openai.com</a></li>
+            <li class="flex gap-2"><span class="text-neutral-500">2.</span> Sign up or log in to your account</li>
+            <li class="flex gap-2"><span class="text-neutral-500">3.</span> Navigate to <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-400 hover:underline">API Keys</a> section</li>
+            <li class="flex gap-2"><span class="text-neutral-500">4.</span> Click "Create new secret key"</li>
+            <li class="flex gap-2"><span class="text-neutral-500">5.</span> Copy the key and paste it below</li>
+          </ol>
+          <p class="text-xs text-neutral-500 mt-3">💡 Note: OpenAI offers $5 free credits for new accounts</p>
+        </div>
         
         <div class="mb-6">
           <label class="block text-sm text-neutral-400 mb-2">API Key</label>
@@ -111,9 +124,6 @@
             class="w-full bg-[#262626] border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 outline-none focus:border-neutral-500 transition"
             placeholder="sk-..."
           >
-          <p class="text-xs text-neutral-500 mt-2">
-            <span id="apiKeyHint">Get your key at platform.openai.com</span>
-          </p>
         </div>
         
         <div class="flex items-center gap-3">
@@ -316,12 +326,27 @@
       if (provider === 'demo') {
         nextStep(4);
       } else {
+        const stepsEl = document.getElementById('apiSteps');
         if (provider === 'openai') {
           document.getElementById('apiKeyInput').placeholder = 'sk-...';
-          document.getElementById('apiKeyHint').textContent = 'Get your key at platform.openai.com';
+          stepsEl.innerHTML = `
+            <li class="flex gap-2"><span class="text-neutral-500">1.</span> Go to <a href="https://platform.openai.com/signup" target="_blank" class="text-blue-400 hover:underline">platform.openai.com</a></li>
+            <li class="flex gap-2"><span class="text-neutral-500">2.</span> Sign up or log in to your account</li>
+            <li class="flex gap-2"><span class="text-neutral-500">3.</span> Navigate to <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-400 hover:underline">API Keys</a> section</li>
+            <li class="flex gap-2"><span class="text-neutral-500">4.</span> Click "Create new secret key"</li>
+            <li class="flex gap-2"><span class="text-neutral-500">5.</span> Copy the key and paste it below</li>
+          `;
+          document.querySelector('#apiInstructions .text-xs').textContent = '💡 Note: OpenAI offers $5 free credits for new accounts';
         } else if (provider === 'anthropic') {
           document.getElementById('apiKeyInput').placeholder = 'sk-ant-...';
-          document.getElementById('apiKeyHint').textContent = 'Get your key at console.anthropic.com';
+          stepsEl.innerHTML = `
+            <li class="flex gap-2"><span class="text-neutral-500">1.</span> Go to <a href="https://console.anthropic.com" target="_blank" class="text-blue-400 hover:underline">console.anthropic.com</a></li>
+            <li class="flex gap-2"><span class="text-neutral-500">2.</span> Sign up or log in to your account</li>
+            <li class="flex gap-2"><span class="text-neutral-500">3.</span> Navigate to <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-blue-400 hover:underline">API Keys</a> in Settings</li>
+            <li class="flex gap-2"><span class="text-neutral-500">4.</span> Click "Create Key"</li>
+            <li class="flex gap-2"><span class="text-neutral-500">5.</span> Copy the key and paste it below</li>
+          `;
+          document.querySelector('#apiInstructions .text-xs').textContent = '💡 Note: Anthropic offers $5 free credits for new accounts';
         }
         nextStep(3);
       }
