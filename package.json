@@ -1,38 +1,42 @@
 {
-  "name": "openclaw-tui",
+  "name": "openclaw-chat-ui",
   "version": "1.0.0",
-  "description": "A beautiful, user-friendly Terminal UI for OpenClaw CLI - Your open source AI assistant",
+  "description": "A modern, open-source AI chat interface with OpenAI GPT-4 and Anthropic Claude integration",
   "main": "src/index.js",
   "bin": {
-    "openclaw-tui": "./bin/cli.js",
-    "octui": "./bin/cli.js"
+    "openclaw-chat-ui": "./bin/cli.js",
+    "openclaw": "./bin/cli.js"
   },
   "scripts": {
     "start": "node bin/cli.js",
+    "web": "node web/server.js",
     "dev": "node bin/cli.js --dev",
     "test": "node tests/index.js",
     "lint": "eslint src/"
   },
   "keywords": [
     "openclaw",
-    "cli",
-    "tui",
-    "terminal",
+    "chatgpt",
+    "claude",
+    "openai",
+    "anthropic",
     "ai",
-    "assistant",
     "chat",
-    "interactive"
+    "gpt-4",
+    "assistant",
+    "open-source",
+    "self-hosted"
   ],
-  "author": "",
+  "author": "Raheef Jalmiran <raheefjalmiran@github.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/openclaw-tui.git"
+    "url": "https://github.com/raheefjalmiran/openclaw-chat-ui.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/openclaw-tui/issues"
+    "url": "https://github.com/raheefjalmiran/openclaw-chat-ui/issues"
   },
-  "homepage": "https://github.com/yourusername/openclaw-tui#readme",
+  "homepage": "https://github.com/raheefjalmiran/openclaw-chat-ui#readme",
   "engines": {
     "node": ">=18.0.0"
   },
