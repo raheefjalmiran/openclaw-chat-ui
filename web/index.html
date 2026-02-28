@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { background: #171717; }
+    .sidebar { background: #0f0f0f; }
+    .chat-item:hover { background: #262626; }
+    .chat-item.active { background: #262626; }
+    .input-box { background: #262626; border: 1px solid #404040; }
+    .input-box:focus-within { border-color: #525252; }
+    .message-ai { background: #262626; }
+    .scrollbar::-webkit-scrollbar { width: 6px; }
+    .scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
+    .typing-dot { animation: blink 1.4s infinite both; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    pre { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; }
+    code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+    .prose strong { color: #fff; font-weight: 600; }
+    .prose code { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .prose pre code { background: transparent; padding: 0; }
+    .prose blockquote { border-left: 3px solid #525252; padding-left: 16px; color: #a3a3a3; }
+    .setup-card { background: #1a1a1a; border: 1px solid #333; }
+    .setup-card:hover { border-color: #525252; }
+    .setup-card.selected { border-color: #3b82f6; background: #1e293b; }
+  </style>
+</head>
+<body class="h-screen flex text-neutral-200">
+
+  <!-- Setup Screen -->
+  <div id="setupScreen" class="fixed inset-0 bg-[#171717] z-50 flex items-center justify-center p-4">
+    <div class="max-w-xl w-full">
+      <!-- Step 1: Welcome -->
+      <div id="setupStep1" class="text-center">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center mx-auto mb-6">
+          <span class="text-3xl">🦞</span>
+        </div>
+        <h1 class="text-3xl font-semibold text-white mb-3">Welcome to OpenClaw</h1>
+        <p class="text-neutral-400 mb-8">Let's get you set up in just a few steps.</p>
+        <button onclick="nextStep(2)" class="px-8 py-3 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition">
+          Get Started
+        </button>
+      </div>
+
+      <!-- Step 2: Choose Provider -->
+      <div id="setupStep2" class="hidden">
+        <h2 class="text-2xl font-semibold text-white mb-2">Choose your AI provider</h2>
+        <p class="text-neutral-400 mb-6">Select which AI model you'd like to use.</p>
+        
+        <div class="space-y-3 mb-8">
+          <button onclick="selectProvider('openai')" class="setup-card w-full p-4 rounded-xl text-left flex items-center gap-4 transition" data-provider="openai">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <span class="text-lg">🤖</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-white">OpenAI GPT-4</p>
+              <p class="text-sm text-neutral-500">Most capable, requires API key</p>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-neutral-500"></i>
+          </button>
+          
+          <button onclick="selectProvider('anthropic')" class="setup-card w-full p-4 rounded-xl text-left flex items-center gap-4 transition" data-provider="anthropic">
+            <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              <span class="text-lg">🧠</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-white">Anthropic Claude</p>
+              <p class="text-sm text-neutral-500">Great for analysis, requires API key</p>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-neutral-500"></i>
+          </button>
+          
+          <button onclick="selectProvider('demo')" class="setup-card w-full p-4 rounded-xl text-left flex items-center gap-4 transition" data-provider="demo">
+            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <span class="text-lg">✨</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-white">Demo Mode</p>
+              <p class="text-sm text-neutral-500">Try with simulated responses, no key needed</p>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-neutral-500"></i>
+          </button>
+        </div>
+        
+        <button onclick="nextStep(1)" class="text-neutral-500 hover:text-white transition text-sm">
+          ← Back
+        </button>
+      </div>
+
+      <!-- Step 3: API Key -->
+      <div id="setupStep3" class="hidden">
+        <h2 class="text-2xl font-semibold text-white mb-2">Enter your API key</h2>
+        <p class="text-neutral-400 mb-6" id="apiKeyDescription">Your key is stored locally and never sent to our servers.</p>
+        
+        <div class="mb-6">
+          <label class="block text-sm text-neutral-400 mb-2">API Key</label>
+          <input 
+            type="password" 
+            id="apiKeyInput" 
+            class="w-full bg-[#262626] border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 outline-none focus:border-neutral-500 transition"
+            placeholder="sk-..."
+          >
+          <p class="text-xs text-neutral-500 mt-2">
+            <span id="apiKeyHint">Get your key at platform.openai.com</span>
+          </p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <button onclick="nextStep(2)" class="px-6 py-3 border border-neutral-700 rounded-xl text-neutral-300 hover:bg-neutral-800 transition">
+            Back
+          </button>
+          <button onclick="saveApiKey()" class="flex-1 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition">
+            Continue
+          </button>
+        </div>
+        
+        <button onclick="skipApiKey()" class="w-full mt-4 text-neutral-500 hover:text-white transition text-sm">
+          Skip for now (use demo mode)
+        </button>
+      </div>
+
+      <!-- Step 4: Personalization -->
+      <div id="setupStep4" class="hidden">
+        <h2 class="text-2xl font-semibold text-white mb-2">Personalize your experience</h2>
+        <p class="text-neutral-400 mb-6">Tell us a bit about yourself (optional).</p>
+        
+        <div class="space-y-4 mb-6">
+          <div>
+            <label class="block text-sm text-neutral-400 mb-2">Your name</label>
+            <input 
+              type="text" 
+              id="userName" 
+              class="w-full bg-[#262626] border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 outline-none focus:border-neutral-500 transition"
+              placeholder="Enter your name"
+            >
+          </div>
+          
+          <div>
+            <label class="block text-sm text-neutral-400 mb-2">What will you use OpenClaw for?</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="toggleUseCase(this)" class="setup-card px-4 py-2 rounded-lg text-sm text-neutral-300 transition">Coding</button>
+              <button onclick="toggleUseCase(this)" class="setup-card px-4 py-2 rounded-lg text-sm text-neutral-300 transition">Writing</button>
+              <button onclick="toggleUseCase(this)" class="setup-card px-4 py-2 rounded-lg text-sm text-neutral-300 transition">Research</button>
+              <button onclick="toggleUseCase(this)" class="setup-card px-4 py-2 rounded-lg text-sm text-neutral-300 transition">Learning</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <button onclick="nextStep(2)" class="px-6 py-3 border border-neutral-700 rounded-xl text-neutral-300 hover:bg-neutral-800 transition">
+            Back
+          </button>
+          <button onclick="completeSetup()" class="flex-1 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-neutral-200 transition">
+            Start Chatting
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Sidebar -->
+  <aside class="sidebar w-64 flex flex-col border-r border-neutral-800">
+    <!-- New Chat -->
+    <div class="p-3">
+      <button onclick="newChat()" class="w-full px-3 py-2.5 rounded-lg border border-neutral-700 hover:bg-neutral-800 transition flex items-center gap-3 text-sm">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        New chat
+      </button>
+    </div>
+
+    <!-- Chat History -->
+    <div class="flex-1 overflow-y-auto scrollbar px-2">
+      <div class="px-2 py-2 text-xs text-neutral-500 font-medium">Today</div>
+      <div id="chatHistory" class="space-y-0.5"></div>
+    </div>
+
+    <!-- User -->
+    <div class="p-3 border-t border-neutral-800">
+      <div class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-neutral-800 cursor-pointer transition">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-sm font-medium text-white">U</div>
+        <span class="text-sm flex-1">User</span>
+        <i data-lucide="more-horizontal" class="w-4 h-4 text-neutral-500"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="h-12 flex items-center justify-between px-4 border-b border-neutral-800">
+      <div class="flex items-center gap-2">
+        <span class="font-medium">OpenClaw</span>
+        <span class="text-xs px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Pro</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="clearChat()" class="p-2 hover:bg-neutral-800 rounded-lg transition" title="Clear">
+          <i data-lucide="trash-2" class="w-4 h-4 text-neutral-400"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat -->
+    <div id="chatArea" class="flex-1 overflow-y-auto scrollbar">
+      <!-- Welcome -->
+      <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center px-4">
+        <div class="max-w-2xl w-full">
+          <div class="text-center mb-8">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center mx-auto mb-4">
+              <span class="text-xl">🦞</span>
+            </div>
+            <h1 class="text-2xl font-semibold text-white mb-2">How can I help you today?</h1>
+            <p class="text-neutral-400 text-sm">Ask me anything. I'm here to help.</p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="quickPrompt('Explain quantum computing in simple terms')" class="p-4 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition text-left group">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="lightbulb" class="w-4 h-4 text-neutral-500 group-hover:text-orange-400 transition"></i>
+                <span class="text-sm font-medium">Explain a concept</span>
+              </div>
+              <p class="text-xs text-neutral-500">Break down complex topics</p>
+            </button>
+            <button onclick="quickPrompt('Help me write a professional email')" class="p-4 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition text-left group">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="pen-line" class="w-4 h-4 text-neutral-500 group-hover:text-blue-400 transition"></i>
+                <span class="text-sm font-medium">Help me write</span>
+              </div>
+              <p class="text-xs text-neutral-500">Emails, essays, and more</p>
+            </button>
+            <button onclick="quickPrompt('Write a Python function to sort a list')" class="p-4 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition text-left group">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="code-2" class="w-4 h-4 text-neutral-500 group-hover:text-green-400 transition"></i>
+                <span class="text-sm font-medium">Write code</span>
+              </div>
+              <p class="text-xs text-neutral-500">Debug and develop</p>
+            </button>
+            <button onclick="quickPrompt('Give me 5 creative business ideas')" class="p-4 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition text-left group">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-neutral-500 group-hover:text-purple-400 transition"></i>
+                <span class="text-sm font-medium">Brainstorm</span>
+              </div>
+              <p class="text-xs text-neutral-500">Generate creative ideas</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="messages" class="max-w-3xl mx-auto px-4 py-6 space-y-6"></div>
+    </div>
+
+    <!-- Input -->
+    <div class="p-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="input-box rounded-2xl px-4 py-3 flex items-end gap-3">
+          <textarea 
+            id="messageInput" 
+            rows="1"
+            class="flex-1 bg-transparent resize-none outline-none text-sm placeholder-neutral-500 max-h-32"
+            placeholder="Message OpenClaw..."
+            onkeydown="handleInput(event)"
+            oninput="autoResize(this)"
+          ></textarea>
+          <button onclick="sendMessage()" id="sendBtn" class="p-2 rounded-lg bg-white hover:bg-neutral-200 transition disabled:opacity-30 disabled:cursor-not-allowed">
+            <i data-lucide="arrow-up" class="w-4 h-4 text-black"></i>
+          </button>
+        </div>
+        <p class="text-center text-neutral-600 text-xs mt-2">OpenClaw may produce inaccurate information.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    let messages = [];
+    let chats = [];
+    let currentChatId = Date.now();
+    let isProcessing = false;
+    let selectedProvider = 'demo';
+    let apiKey = '';
+    let userName = '';
+    let useCases = [];
+
+    // Check if already set up
+    const savedConfig = localStorage.getItem('openclaw_config');
+    if (savedConfig) {
+      const config = JSON.parse(savedConfig);
+      selectedProvider = config.provider || 'demo';
+      apiKey = config.apiKey || '';
+      userName = config.userName || '';
+      document.getElementById('setupScreen').style.display = 'none';
+    }
+
+    function nextStep(step) {
+      document.querySelectorAll('[id^="setupStep"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`setupStep${step}`).classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function selectProvider(provider) {
+      selectedProvider = provider;
+      document.querySelectorAll('[data-provider]').forEach(el => el.classList.remove('selected'));
+      document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
+      
+      if (provider === 'demo') {
+        nextStep(4);
+      } else {
+        if (provider === 'openai') {
+          document.getElementById('apiKeyInput').placeholder = 'sk-...';
+          document.getElementById('apiKeyHint').textContent = 'Get your key at platform.openai.com';
+        } else if (provider === 'anthropic') {
+          document.getElementById('apiKeyInput').placeholder = 'sk-ant-...';
+          document.getElementById('apiKeyHint').textContent = 'Get your key at console.anthropic.com';
+        }
+        nextStep(3);
+      }
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      if (!key) {
+        alert('Please enter an API key or skip to use demo mode.');
+        return;
+      }
+      apiKey = key;
+      nextStep(4);
+    }
+
+    function skipApiKey() {
+      selectedProvider = 'demo';
+      apiKey = '';
+      nextStep(4);
+    }
+
+    function toggleUseCase(btn) {
+      btn.classList.toggle('selected');
+      const useCase = btn.textContent;
+      if (useCases.includes(useCase)) {
+        useCases = useCases.filter(u => u !== useCase);
+      } else {
+        useCases.push(useCase);
+      }
+    }
+
+    function completeSetup() {
+      userName = document.getElementById('userName').value.trim() || 'User';
+      
+      const config = {
+        provider: selectedProvider,
+        apiKey: apiKey,
+        userName: userName,
+        useCases: useCases,
+        setupComplete: true
+      };
+      localStorage.setItem('openclaw_config', JSON.stringify(config));
+      
+      // Update UI with user name
+      document.querySelector('.sidebar .w-8').nextElementSibling.textContent = userName;
+      
+      // Hide setup screen
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('messageInput').focus();
+    }
+
+    function handleInput(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text || isProcessing) return;
+
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('messages').style.display = 'block';
+      
+      addMessage('user', text);
+      input.value = '';
+      input.style.height = 'auto';
+      
+      isProcessing = true;
+      showTyping();
+      
+      // Check if using demo mode or real API
+      if (selectedProvider === 'demo' || !apiKey) {
+        // Demo mode - use mock responses
+        setTimeout(() => {
+          hideTyping();
+          const response = generateMockResponse(text);
+          addMessage('assistant', response);
+          isProcessing = false;
+        }, 800 + Math.random() * 1200);
+      } else {
+        // Real API mode
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              message: text, 
+              conversationId: currentChatId,
+              provider: selectedProvider,
+              apiKey: apiKey
+            })
+          });
+          
+          const data = await response.json();
+          hideTyping();
+          
+          if (data.error) {
+            addMessage('assistant', `⚠️ ${data.error}`);
+          } else {
+            addMessage('assistant', data.message);
+          }
+        } catch (error) {
+          hideTyping();
+          addMessage('assistant', '⚠️ Failed to connect. Using demo mode.');
+          // Fallback to demo
+          const response = generateMockResponse(text);
+          addMessage('assistant', response);
+        }
+        isProcessing = false;
+      }
+    }
+    
+    function generateMockResponse(text) {
+      const responses = [
+        `Here's what I found:\n\n${text.length > 20 ? 'Based on your question, ' : ''}I can help you understand this better.\n\n**Key points:**\n\n1. This is an important concept to grasp\n2. There are several factors to consider\n3. Let me know if you'd like more detail\n\nWould you like me to elaborate on any of these points?`,
+        `Great question!\n\nLet me break this down for you:\n\n**Overview**\n\nThis topic involves understanding a few core principles. Here's a structured approach:\n\n\`\`\`\nStep 1: Understand the basics\nStep 2: Apply the concepts\nStep 3: Practice and iterate\n\`\`\`\n\nIs there a specific aspect you'd like to explore further?`,
+        `I'd be happy to help with that.\n\n> The key is to start with fundamentals and build from there.\n\nHere's my recommendation:\n\n**First**, consider the context and requirements. **Second**, break down the problem into smaller parts. **Third**, tackle each part systematically.\n\nLet me know if you need more specific guidance.`,
+        `Here's a comprehensive answer:\n\n**Summary**\n\nThis is a nuanced topic with multiple angles to consider. Let me walk you through the main points.\n\n**Details**\n\nWhen approaching this, it's helpful to think about:\n- The underlying principles\n- Practical applications\n- Common pitfalls to avoid\n\nWant me to dive deeper into any of these areas?`
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    function addMessage(role, content) {
+      messages.push({ role, content, time: new Date() });
+      renderMessages();
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messages');
+      container.innerHTML = messages.map((msg, i) => {
+        if (msg.role === 'user') {
+          return `
+            <div class="flex justify-end fade-in">
+              <div class="max-w-xl bg-neutral-700 rounded-2xl rounded-br-md px-4 py-3 text-sm">
+                ${escapeHtml(msg.content)}
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex gap-4 fade-in">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">🦞</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="prose text-sm text-neutral-200 leading-relaxed">
+                  ${formatMarkdown(msg.content)}
+                </div>
+                <div class="flex items-center gap-2 mt-3">
+                  <button onclick="copyMessage(${i})" class="p-1.5 hover:bg-neutral-800 rounded transition" title="Copy">
+                    <i data-lucide="copy" class="w-3.5 h-3.5 text-neutral-500"></i>
+                  </button>
+                  <button onclick="likeMessage(${i})" class="p-1.5 hover:bg-neutral-800 rounded transition" title="Good response">
+                    <i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-neutral-500"></i>
+                  </button>
+                  <button onclick="dislikeMessage(${i})" class="p-1.5 hover:bg-neutral-800 rounded transition" title="Bad response">
+                    <i data-lucide="thumbs-down" class="w-3.5 h-3.5 text-neutral-500"></i>
+                  </button>
+                  <button onclick="regenerate(${i})" class="p-1.5 hover:bg-neutral-800 rounded transition" title="Regenerate">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-neutral-500"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+      
+      lucide.createIcons();
+      const chatArea = document.getElementById('chatArea');
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function showTyping() {
+      const container = document.getElementById('messages');
+      const typing = document.createElement('div');
+      typing.id = 'typingIndicator';
+      typing.className = 'flex gap-4 fade-in';
+      typing.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+          <span class="text-sm">🦞</span>
+        </div>
+        <div class="flex items-center gap-1 py-3">
+          <span class="typing-dot w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+          <span class="typing-dot w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+          <span class="typing-dot w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+        </div>
+      `;
+      container.appendChild(typing);
+      const chatArea = document.getElementById('chatArea');
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function hideTyping() {
+      const typing = document.getElementById('typingIndicator');
+      if (typing) typing.remove();
+    }
+
+    function generateResponse(text) {
+      const responses = [
+        `Here's what I found:\n\n${text.length > 20 ? 'Based on your question, ' : ''}I can help you understand this better.\n\n**Key points:**\n\n1. This is an important concept to grasp\n2. There are several factors to consider\n3. Let me know if you'd like more detail\n\nWould you like me to elaborate on any of these points?`,
+        `Great question!\n\nLet me break this down for you:\n\n**Overview**\n\nThis topic involves understanding a few core principles. Here's a structured approach:\n\n\`\`\`\nStep 1: Understand the basics\nStep 2: Apply the concepts\nStep 3: Practice and iterate\n\`\`\`\n\nIs there a specific aspect you'd like to explore further?`,
+        `I'd be happy to help with that.\n\n> The key is to start with fundamentals and build from there.\n\nHere's my recommendation:\n\n**First**, consider the context and requirements. **Second**, break down the problem into smaller parts. **Third**, tackle each part systematically.\n\nLet me know if you need more specific guidance.`,
+        `Here's a comprehensive answer:\n\n**Summary**\n\nThis is a nuanced topic with multiple angles to consider. Let me walk you through the main points.\n\n**Details**\n\nWhen approaching this, it's helpful to think about:\n- The underlying principles\n- Practical applications\n- Common pitfalls to avoid\n\nWant me to dive deeper into any of these areas?`
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    function formatMarkdown(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/```([\s\S]*?)```/g, '<pre class="p-4 my-3 overflow-x-auto"><code>$1</code></pre>')
+        .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function quickPrompt(text) {
+      document.getElementById('messageInput').value = text;
+      document.getElementById('messageInput').focus();
+    }
+
+    function newChat() {
+      currentChatId = Date.now();
+      chats.push({ id: currentChatId, title: 'New chat', messages: [] });
+      messages = [];
+      document.getElementById('messages').innerHTML = '';
+      document.getElementById('messages').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      updateChatHistory();
+    }
+
+    function updateChatHistory() {
+      const container = document.getElementById('chatHistory');
+      container.innerHTML = chats.slice().reverse().map(chat => `
+        <button onclick="loadChat(${chat.id})" class="chat-item w-full px-3 py-2 rounded-lg transition text-left flex items-center gap-3 text-sm ${chat.id === currentChatId ? 'active' : ''}">
+          <i data-lucide="message-square" class="w-4 h-4 text-neutral-500"></i>
+          <span class="truncate flex-1 text-neutral-300">${chat.title}</span>
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function loadChat(id) {
+      const chat = chats.find(c => c.id === id);
+      if (chat) {
+        currentChatId = id;
+        messages = [...chat.messages];
+        if (messages.length) {
+          document.getElementById('welcomeScreen').style.display = 'none';
+          document.getElementById('messages').style.display = 'block';
+          renderMessages();
+        } else {
+          document.getElementById('messages').style.display = 'none';
+          document.getElementById('welcomeScreen').style.display = 'flex';
+        }
+        updateChatHistory();
+      }
+    }
+
+    async function clearChat() {
+      messages = [];
+      document.getElementById('messages').innerHTML = '';
+      document.getElementById('messages').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      
+      // Clear server-side conversation history
+      await fetch('/api/chat/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId: currentChatId })
+      });
+    }
+
+    function copyMessage(index) {
+      navigator.clipboard.writeText(messages[index].content);
+    }
+
+    function likeMessage(index) {}
+    function dislikeMessage(index) {}
+    function regenerate(index) {
+      if (index > 0 && messages[index].role === 'assistant') {
+        messages.pop();
+        isProcessing = true;
+        showTyping();
+        setTimeout(() => {
+          hideTyping();
+          const response = generateResponse(messages[messages.length - 1].content);
+          addMessage('assistant', response);
+          isProcessing = false;
+        }, 800 + Math.random() * 1200);
+      }
+    }
+
+    document.getElementById('messageInput').focus();
+  </script>
+</body>
+</html>

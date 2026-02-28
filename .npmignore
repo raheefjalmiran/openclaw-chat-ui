@@ -1,0 +1,6 @@
+tests/
+.github/
+.gitignore
+.eslintrc.js
+CONTRIBUTING.md
+*.log

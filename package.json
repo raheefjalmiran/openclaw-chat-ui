@@ -1,0 +1,56 @@
+{
+  "name": "openclaw-tui",
+  "version": "1.0.0",
+  "description": "A beautiful, user-friendly Terminal UI for OpenClaw CLI - Your open source AI assistant",
+  "main": "src/index.js",
+  "bin": {
+    "openclaw-tui": "./bin/cli.js",
+    "octui": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js",
+    "dev": "node bin/cli.js --dev",
+    "test": "node tests/index.js",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "openclaw",
+    "cli",
+    "tui",
+    "terminal",
+    "ai",
+    "assistant",
+    "chat",
+    "interactive"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/openclaw-tui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/openclaw-tui/issues"
+  },
+  "homepage": "https://github.com/yourusername/openclaw-tui#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "cli-highlight": "^2.1.11",
+    "conf": "^10.2.0",
+    "express": "^5.2.1",
+    "figlet": "^1.7.0",
+    "inquirer": "^8.2.6",
+    "marked": "^4.3.0",
+    "marked-terminal": "^5.2.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  }
+}
